@@ -61,6 +61,18 @@
         .btn-set { padding: 8px 15px; background: white; border: 1px solid #cbd5e0; border-radius: 6px; cursor: pointer; }
         .sync-status { padding: 8px; background: #edf2f7; text-align: center; border-radius: 8px; font-size: 0.9rem; font-weight: bold; color: #4a5568; margin-bottom: 15px; }
 
+        .answer-reveal-box {
+            display: none;
+            background: #fff7ed;
+            border: 2px dashed #d69e2e;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: bold;
+            color: #92400e;
+            font-size: 1rem;
+        }
+        .answer-reveal-box.show { display: block; }
+
         .cry-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -91,6 +103,7 @@
         <div id="result-msg"></div>
         <div style="margin-top: 20px; display: flex; gap: 10px;">
             <button class="btn-main" style="background:#4a5568" onclick="loadNewQuestion(); sendCommand('newQuestion')">全部換題 (同步更新)</button>
+            <button id="btn-toggle-answers" class="btn-main" style="background:#d69e2e" onclick="toggleAnswers()">👁️ 公布正確答案</button>
         </div>
     </div>
     <div id="admin" class="content">
@@ -147,6 +160,7 @@
     let collapsedCategories = {}; // 追蹤哪些分類被折疊
     let teamCurrentQuestions = [];
     let teamUsedQuestions = [];
+    let answersVisible = false; // 是否正在公布正確答案
     const teamColors = ['#e53e3e', '#3182ce', '#38a169', '#d69e2e', '#805ad5', '#319795', '#ed64a6'];
 
     // 🟢 從 Firebase 雲端獲取最新題庫
@@ -253,6 +267,12 @@
         teamCurrentQuestions = [];
         teamUsedQuestions = new Array(teams.length).fill().map(() => []);
         document.getElementById('result-msg').style.display = 'none';
+        answersVisible = false;
+        const btnToggle = document.getElementById('btn-toggle-answers');
+        if (btnToggle) {
+            btnToggle.textContent = '👁️ 公布正確答案';
+            btnToggle.style.background = '#d69e2e';
+        }
         
         const selectedQs = getUniqueQuestions(teams.length);
         teams.forEach((team, idx) => {
@@ -283,6 +303,7 @@
                 <div class="q-text-large">${q.spoken}</div>
                 <div style="background:var(--score-gold); padding:5px 12px; border-radius:50px; font-weight:900; color:#744210;">★ 5</div>
             </div>
+            <div id="answer-reveal-${idx}" class="answer-reveal-box${answersVisible ? ' show' : ''}">✅ 正確答案：${q.answers.map(a => a.join(' ')).join('　|　')}</div>
             <div class="labeled-box">
                 <div class="box-tag" style="background:#4a5568">語序區</div>
                 <div id="target-zone-${idx}" class="zone target-area"></div>
@@ -557,6 +578,19 @@
 
     function setupDropZone(zone, teamIdx) {
         // 新系統在全域事件處理，此處保留空函式以維持呼叫相容
+    }
+
+    function toggleAnswers() {
+        answersVisible = !answersVisible;
+        const btn = document.getElementById('btn-toggle-answers');
+        teamCurrentQuestions.forEach((data, idx) => {
+            const box = document.getElementById(`answer-reveal-${idx}`);
+            if (box) box.classList.toggle('show', answersVisible);
+        });
+        if (btn) {
+            btn.textContent = answersVisible ? '🙈 隱藏正確答案' : '👁️ 公布正確答案';
+            btn.style.background = answersVisible ? '#9ca3af' : '#d69e2e';
+        }
     }
 
     function checkAnswer(teamIdx) {
@@ -1181,3 +1215,4 @@
 </script>
 </body>
 </html>
+
